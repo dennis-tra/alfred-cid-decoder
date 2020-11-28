@@ -2,7 +2,7 @@
 
 [![standard-readme compliant](https://img.shields.io/badge/readme%20style-standard-brightgreen.svg?style=flat-square)](https://github.com/dennis-tra/alfred-cid-decoder)
 
-An [Alfred](https://www.alfredapp.com/) workflow to decode multiformats [Content Identifiers](https://github.com/multiformats/cid) for distributed systems.
+An [Alfred](https://www.alfredapp.com/) workflow to decode multiformats [Content Identifiers](https://github.com/multiformats/cid).
 
 ## Table of Contents
 
