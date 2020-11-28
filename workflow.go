@@ -1,61 +1,64 @@
 package main
 
-// Package is called aw
 import (
 	"encoding/hex"
 	"fmt"
 	"strings"
 
 	aw "github.com/deanishe/awgo"
-	cid "github.com/ipfs/go-cid"
+	cidpkg "github.com/ipfs/go-cid"
 	mb "github.com/multiformats/go-multibase"
 	mc "github.com/multiformats/go-multicodec"
 	mh "github.com/multiformats/go-multihash"
 )
 
-// Workflow is the main API
+// wf is the workflows main API.
 var wf *aw.Workflow
 
 func init() {
-	// Create a new Workflow using default settings.
-	// Critical settings are provided by Alfred via environment variables,
-	// so this *will* die in flames if not run in an Alfred-like environment.
 	wf = aw.New()
 }
 
-// Your workflow starts here
+// run contains the workflow logic.
 func run() {
 
-	args := wf.Args()
-	if len(args) <= 0 {
-		return
-	}
-	id := args[0]
+	defer wf.SendFeedback()
 
-	c, err := cid.Decode(id)
+	cidstr := wf.Args()[0]
+
+	cid, err := cidpkg.Decode(cidstr)
 	if err != nil {
-		it := wf.NewItem("Invalid CID")
-		it.Subtitle(id)
-		wf.SendFeedback()
+		wf.NewItem("Invalid CID").Subtitle(err.Error())
 		return
 	}
 
-	e, _ := cid.ExtractEncoding(id)
+	enc, err := cidpkg.ExtractEncoding(cidstr)
+	if err != nil {
+		wf.NewItem("Invalid encoding").Subtitle(err.Error())
+		return
+	}
 
-	wf.NewItem(mb.EncodingToStr[e]).Subtitle("Encoding")
-	wf.NewItem(fmt.Sprintf("cidv%d", c.Prefix().Version)).Subtitle("CID Version")
-	wf.NewItem(mc.Code(c.Prefix().Codec).String()).Subtitle(fmt.Sprintf("Multicodec (0x%x)", c.Prefix().Codec))
-	dmh, _ := mh.Decode(c.Hash())
-	wf.NewItem(mc.Code(dmh.Code).String()).Subtitle(fmt.Sprintf("Multihash Type (0x%x)", dmh.Code))
-	wf.NewItem(fmt.Sprintf("%d", dmh.Length*8)).Subtitle("Multihash Size (bits)")
-	wf.NewItem(strings.ToUpper(hex.EncodeToString(dmh.Digest))).Subtitle("Digest in Hex")
+	dmh, err := mh.Decode(cid.Hash())
+	if err != nil {
+		wf.NewItem("Invalid multihash").Subtitle(err.Error())
+		return
+	}
 
-	// Send results to Alfred
-	wf.SendFeedback()
+	encstr := mb.EncodingToStr[enc]
+	verstr := fmt.Sprintf("cidv%d", cid.Prefix().Version)
+	codstr := mc.Code(cid.Prefix().Codec).String()
+	mhtype := mc.Code(dmh.Code).String()
+	mhsize := fmt.Sprintf("%d", dmh.Length*8)
+	digest := strings.ToUpper(hex.EncodeToString(dmh.Digest))
+
+	wf.NewItem(encstr).Subtitle(fmt.Sprintf("Encoding (%s)", string(rune(enc)))).Arg(encstr).Valid(true)
+	wf.NewItem(verstr).Subtitle("Version").Arg(verstr).Valid(true)
+	wf.NewItem(codstr).Subtitle(fmt.Sprintf("Multicodec (0x%x)", cid.Prefix().Codec)).Arg(codstr).Valid(true)
+	wf.NewItem(mhtype).Subtitle(fmt.Sprintf("Multihash Type (0x%x)", dmh.Code)).Arg(mhtype).Valid(true)
+	wf.NewItem(mhsize).Subtitle("Multihash Size (bits)").Arg(mhsize).Valid(true)
+	wf.NewItem(digest).Subtitle("Digest in Hex").Arg(digest).Valid(true)
 }
 
 func main() {
-	// Wrap your entry point with Run() to catch and log panics and
-	// show an error in Alfred instead of silently dying
 	wf.Run(run)
 }
