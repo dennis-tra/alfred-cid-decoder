@@ -15,7 +15,7 @@ An [Alfred](https://www.alfredapp.com/) workflow to decode multiformats [Content
 
 ## Download
 
-Click [here](https://github.com/dennis-tra/alfred-cid-decoder/releases/tag/1.0.0) and download `cid-decoder.alfredworkflow`.
+Click [here](https://github.com/dennis-tra/alfred-cid-decoder/releases/tag/1.0.1) and download `cid-decoder.alfredworkflow`.
 
 ## Usage
 
